@@ -1,0 +1,14 @@
+num_nodes: 1000
+patch_rate: 0.25
+scan_rate: 5
+topology: "scale_free"
+worm_type: "hitlist"
+worm_params: {}
+patient_zero: 5
+max_ticks: 150
+seed: 42
+description: "Conficker (2008) - Multi-vector propagation with hitlist and domain generation"
+firewall_rules: []
+intervention_tick: 50
+intervention_action: "patch_all"
+intervention_params: {}

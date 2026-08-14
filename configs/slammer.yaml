@@ -1,0 +1,9 @@
+num_nodes: 1000
+patch_rate: 0.10
+scan_rate: 100
+topology: "random"
+worm_type: "random_scan"
+patient_zero: 1
+max_ticks: 50
+seed: 42
+description: "SQL Slammer (2003) - Extremely fast UDP scanner, saturated internet in 10 minutes"

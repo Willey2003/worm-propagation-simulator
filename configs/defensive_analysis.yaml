@@ -1,0 +1,20 @@
+num_nodes: 500
+patch_rate: 0.20
+scan_rate: 10
+topology: "scale_free"
+worm_type: "random_scan"
+patient_zero: 1
+max_ticks: 100
+seed: 42
+description: "Defensive analysis - testing patching intervention at tick 30"
+firewall_rules:
+  - source_subnet: "subnet_0"
+    dest_subnet: "subnet_1"
+    action: "rate_limit"
+    rate_limit: 30
+  - source_subnet: "subnet_1"
+    dest_subnet: "subnet_2"
+    action: "deny"
+intervention_tick: 30
+intervention_action: "patch_all"
+intervention_params: {}

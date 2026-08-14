@@ -1,0 +1,192 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: worm-simulator
+  labels:
+    app: worm-simulator
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: worm-simulator-config
+  namespace: worm-simulator
+data:
+  code_red.yaml: |
+    num_nodes: 500
+    patch_rate: 0.15
+    scan_rate: 3
+    topology: "random"
+    worm_type: "random_scan"
+    patient_zero: 1
+    max_ticks: 100
+    seed: 42
+  slammer.yaml: |
+    num_nodes: 1000
+    patch_rate: 0.10
+    scan_rate: 100
+    topology: "random"
+    worm_type: "random_scan"
+    patient_zero: 1
+    max_ticks: 50
+    seed: 42
+  conficker.yaml: |
+    num_nodes: 1000
+    patch_rate: 0.25
+    scan_rate: 5
+    topology: "scale_free"
+    worm_type: "hitlist"
+    patient_zero: 5
+    max_ticks: 150
+    seed: 42
+  wannacry.yaml: |
+    num_nodes: 300
+    patch_rate: 0.30
+    scan_rate: 8
+    topology: "datacenter"
+    worm_type: "topological"
+    patient_zero: 1
+    max_ticks: 80
+    seed: 42
+  mirai.yaml: |
+    num_nodes: 200
+    patch_rate: 0.40
+    scan_rate: 12
+    topology: "hierarchical"
+    worm_type: "local_preference"
+    worm_params:
+      local_prob: 0.8
+    patient_zero: 3
+    max_ticks: 60
+    seed: 42
+  defensive_analysis.yaml: |
+    num_nodes: 500
+    patch_rate: 0.20
+    scan_rate: 10
+    topology: "scale_free"
+    worm_type: "random_scan"
+    patient_zero: 1
+    max_ticks: 100
+    seed: 42
+    firewall_rules:
+      - source_subnet: "subnet_0"
+        dest_subnet: "subnet_1"
+        action: "rate_limit"
+        rate_limit: 30
+      - source_subnet: "subnet_1"
+        dest_subnet: "subnet_2"
+        action: "deny"
+    intervention_tick: 30
+    intervention_action: "patch_all"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worm-simulator-api
+  namespace: worm-simulator
+  labels:
+    app: worm-simulator-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worm-simulator-api
+  template:
+    metadata:
+      labels:
+        app: worm-simulator-api
+    spec:
+      containers:
+      - name: api
+        image: worm-propagation-simulator:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PYTHONPATH
+          value: "/app"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: config
+          mountPath: /app/configs
+      volumes:
+      - name: config
+        configMap:
+          name: worm-simulator-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worm-simulator-api
+  namespace: worm-simulator
+spec:
+  selector:
+    app: worm-simulator-api
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: worm-simulation-batch
+  namespace: worm-simulator
+spec:
+  schedule: "0 */6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: simulation
+            image: worm-propagation-simulator:latest
+            command: ["python", "-m", "src.simulator.main", "--scenario", "defensive_analysis", "--ticks", "100", "--output", "/app/output/results_$(date +%s).json"]
+            volumeMounts:
+            - name: config
+              mountPath: /app/configs
+            - name: output
+              mountPath: /app/output
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+          volumes:
+          - name: config
+            configMap:
+              name: worm-simulator-config
+          - name: output
+            persistentVolumeClaim:
+              claimName: worm-simulator-output
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: worm-simulator-output
+  namespace: worm-simulator
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

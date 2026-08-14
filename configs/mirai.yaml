@@ -1,0 +1,11 @@
+num_nodes: 200
+patch_rate: 0.40
+scan_rate: 12
+topology: "hierarchical"
+worm_type: "local_preference"
+worm_params:
+  local_prob: 0.8
+patient_zero: 3
+max_ticks: 60
+seed: 42
+description: "Mirai (2016) - IoT botnet, prefers local subnet scanning for telnet brute force"

@@ -1,0 +1,9 @@
+num_nodes: 500
+patch_rate: 0.15
+scan_rate: 3
+topology: "random"
+worm_type: "random_scan"
+patient_zero: 1
+max_ticks: 100
+seed: 42
+description: "Code Red (2001) - IIS buffer overflow worm, random scanning on port 80"

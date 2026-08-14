@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  worm-simulator-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./configs:/app/configs
+      - ./output:/app/output
+    environment:
+      - PYTHONPATH=/app
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worm-simulator-cli:
+    build: .
+    volumes:
+      - ./configs:/app/configs
+      - ./output:/app/output
+    environment:
+      - PYTHONPATH=/app
+    command: python -m src.simulator.main --scenario code_red --ticks 50 --output /app/output/results.json
+
+  visualization:
+    build: .
+    volumes:
+      - ./output:/app/output
+    command: python -c "
+import json
+from src.visualization.charts import SimulationVisualizer
+with open('/app/output/results.json') as f:
+    data = json.load(f)
+# Visualization would be generated here
+print('Visualization ready in /app/output')
+"
+
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes

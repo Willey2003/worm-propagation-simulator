@@ -1,0 +1,17 @@
+num_nodes: 300
+patch_rate: 0.30
+scan_rate: 8
+topology: "datacenter"
+worm_type: "topological"
+patient_zero: 1
+max_ticks: 80
+seed: 42
+description: "WannaCry (2017) - EternalBlue SMB exploit, spreads via network shares"
+firewall_rules:
+  - source_subnet: "subnet_0"
+    dest_subnet: "subnet_1"
+    action: "deny"
+intervention_tick: 20
+intervention_action: "patch_subnet"
+intervention_params:
+  subnet: "subnet_0"
