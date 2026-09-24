@@ -234,28 +234,34 @@ class WormPropagationSimulator:
             self.running = True
             
         self.tick += 1
-        
+
+        # Create this tick's metrics record first, so the per-tick counters
+        # (scan_attempts, new_infections, blocked_*) accumulate onto the
+        # current tick rather than the previous one.
+        self.metrics_history.append(SimulationMetrics(tick=self.tick))
+
         if self.config.intervention_tick == self.tick:
             self._apply_intervention()
-        
+
         infected_nodes = [n for n in self.nodes.values() if n.status == NodeStatus.INFECTED]
         scan_targets = self.worm_model.select_targets(
             infected_nodes, self.nodes, self.topology, self.config.scan_rate
         )
-        
+
         new_infections = 0
-        
+
         for source_id, targets in scan_targets.items():
             self._record_metric("scan_attempts", len(targets))
-            
+
             for target_id in targets:
                 if self._attempt_exploit(source_id, target_id):
                     new_infections += 1
-        
+
         self._record_metric("new_infections", new_infections)
-        self._record_metrics()
+        # Fill in the end-of-tick status counts on this tick's record.
+        self._update_status_counts()
         self._notify_callbacks()
-        
+
         return self.metrics_history[-1]
     
     def _apply_intervention(self):
@@ -310,19 +316,24 @@ class WormPropagationSimulator:
             setattr(current, metric, getattr(current, metric) + value)
     
     def _record_metrics(self):
+        # Append a fresh metrics record for the current tick and populate its
+        # status counts. Used for the initial (tick 0) snapshot.
+        self.metrics_history.append(SimulationMetrics(tick=self.tick))
+        self._update_status_counts()
+
+    def _update_status_counts(self):
+        # Recompute node-status counts onto the current tick's metrics record,
+        # leaving the per-tick event counters untouched.
         counts = defaultdict(int)
         for node in self.nodes.values():
             counts[node.status.value] += 1
-        
-        metrics = SimulationMetrics(
-            tick=self.tick,
-            healthy=counts.get("healthy", 0),
-            vulnerable=counts.get("vulnerable", 0),
-            infected=counts.get("infected", 0),
-            patched=counts.get("patched", 0),
-            quarantined=counts.get("quarantined", 0)
-        )
-        self.metrics_history.append(metrics)
+
+        current = self.metrics_history[-1]
+        current.healthy = counts.get("healthy", 0)
+        current.vulnerable = counts.get("vulnerable", 0)
+        current.infected = counts.get("infected", 0)
+        current.patched = counts.get("patched", 0)
+        current.quarantined = counts.get("quarantined", 0)
     
     def _log_event(self, event_type: str, data: Dict):
         self.event_log.append({
