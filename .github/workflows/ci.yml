@@ -18,4 +18,4 @@ jobs:
           python -m pip install --upgrade pip
           pip install networkx numpy pyyaml pytest
       - name: Run test suite
-        run: pytest tests/ -v
+        run: python -m pytest tests/ -v
