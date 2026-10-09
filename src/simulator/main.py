@@ -10,7 +10,7 @@ from .engine import (
     WormPropagationSimulator, SimulationConfig, WormType, 
     create_simulator_from_config, FirewallRule
 )
-from .. import load_config
+from . import load_config
 
 app = typer.Typer(help="Network Worm Propagation Simulator")
 console = Console()

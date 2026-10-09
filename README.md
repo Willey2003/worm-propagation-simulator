@@ -23,7 +23,6 @@ worm-propagation-simulator/
 │   ├── api/                # FastAPI REST API
 │   └── analysis/           # Metrics & reporting
 ├── configs/                # Simulation scenarios
-├── docker/                 # Dockerfiles
 ├── k8s/                    # Kubernetes manifests
 ├── tests/                  # Unit & integration tests
 ��── docs/                   # Documentation
@@ -34,12 +33,14 @@ worm-propagation-simulator/
 ### Local Development
 ```bash
 pip install -r requirements.txt
-python src/simulator/main.py --scenario configs/code_red.yaml
+python -m src.simulator.main scenarios              # list built-in scenarios
+python -m src.simulator.main run --scenario code_red
+python -m src.simulator.main compare --scenarios code_red,slammer
 ```
 
 ### Docker
 ```bash
-docker-compose -f docker/docker-compose.yml up --build
+docker-compose up --build
 ```
 
 ### Kubernetes

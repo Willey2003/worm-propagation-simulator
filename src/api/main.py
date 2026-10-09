@@ -11,7 +11,7 @@ from ..simulator.engine import (
     WormPropagationSimulator, SimulationConfig, WormType, FirewallRule, create_simulator_from_config
 )
 from ..simulator.models import NodeStatus
-from .. import load_config
+from ..simulator import load_config
 
 app = FastAPI(title="Worm Propagation Simulator API", version="1.0.0")
 
